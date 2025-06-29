@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image-Keyword Match</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Shape & Object Detection</h1>
+
+    <form id="upload-form" action="/detect/" method="post" enctype="multipart/form-data">
+        <label>Keyword:</label>
+        <input type="text" name="keyword" placeholder="e.g. circle, laptop" required>
+
+        <label>Upload image:</label>
+        <div id="drop-area" class="drop-area">
+            <p>Drag & drop your image here<br>or click to select</p>
+            <input type="file" name="image" id="image" accept="image/*" required hidden>
+        </div>
+
+        <div class="slider-container">
+            <label for="threshold">
+                Similarity threshold:
+                <span id="threshold-value">50</span>%
+            </label>
+            <input type="range" id="threshold" name="threshold" min="30" max="100" value="50" step="1">
+        </div>
+
+        <button type="submit">Check</button>
+    </form>
+
+    {% if result is defined %}
+    <div class="result">
+        <h3>Result:</h3>
+
+        <div class="match-status {{ 'match-yes' if result.object_related else 'match-no' }}">
+            {{ '✅ Match!' if result.object_related else '❌ No Match' }}
+        </div>
+
+        <p><strong>Similarity score:</strong> {{ result.similarity_score }}%</p>
+
+        <p><strong>Detected shapes:</strong></p>
+        <ul>
+            {% for shape, score in result.detected_shapes.items() %}
+                <li>{{ shape }}: {{ score }}%</li>
+            {% endfor %}
+        </ul>
+
+        <p><strong>Annotated image:</strong></p>
+        <img src="data:image/png;base64,{{ result.preview }}" alt="Result Image">
+    </div>
+    {% endif %}
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
