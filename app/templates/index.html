@@ -18,6 +18,11 @@
             <input type="file" name="image" id="image" accept="image/*" required hidden>
         </div>
 
+        <div id="preview-container" style="display:none; margin-top: 1em;">
+            <p><strong>Image preview:</strong></p>
+            <img id="image-preview" style="max-width:100%; border:1px solid #ccc; border-radius:8px;">
+        </div>
+
         <div class="slider-container">
             <label for="threshold">
                 Similarity threshold:
@@ -26,29 +31,71 @@
             <input type="range" id="threshold" name="threshold" min="30" max="100" value="50" step="1">
         </div>
 
+        <div style="margin-top: 1em;">
+            <label><strong>Detection methods:</strong></label><br>
+                <input type="checkbox" id="use_yolo" name="use_yolo" checked>
+                <label for="use_yolo" title="YOLOv8 model - Fast and accurate object detection">Use YOLO (primary object detection)</label><br>
+                <input type="checkbox" id="use_clip" name="use_clip" checked>
+                <label for="use_clip" title="CLIP model - Text-guided object recognition">Use CLIP (secondary object detection)</label><br>
+                <input type="checkbox" id="use_shapes" name="use_shapes" checked>
+                <label for="use_shapes" title="OpenCV-based geometric shape detection">Use shape detection (OpenCV)</label>
+        </div>
+
         <button type="submit">Check</button>
     </form>
 
     {% if result is defined %}
-    <div class="result">
-        <h3>Result:</h3>
+        <div class="result">
+            <div class="detection-methods">
+                <h3>Detection Results:</h3>
+                
+                <!-- YOLO Results -->
+                {% if result.detected_objects %}
+                <div class="method-result">
+                    <h4>🔍 YOLO Detection</h4>
+                    <div class="match-status {{ 'match-yes' if result.yolo_match else 'match-no' }}">
+                        {{ '✅ Match Found!' if result.yolo_match else '❌ No Match' }}
+                    </div>
+                    <p><strong>Detected Objects:</strong></p>
+                    <ul>
+                        {% for obj in result.detected_objects %}
+                            <li>{{ obj }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
 
-        <div class="match-status {{ 'match-yes' if result.object_related else 'match-no' }}">
-            {{ '✅ Match!' if result.object_related else '❌ No Match' }}
+                <!-- CLIP Results -->
+                {% if result.similarity_score is not none %}
+                <div class="method-result">
+                    <h4>🎯 CLIP Detection</h4>
+                    <div class="match-status {{ 'match-yes' if result.object_related else 'match-no' }}">
+                        {{ '✅ Match Found!' if result.object_related else '❌ No Match' }}
+                    </div>
+                    <p><strong>Similarity Score:</strong> {{ result.similarity_score }}%</p>
+                </div>
+                {% endif %}
+
+                <!-- Shape Detection Results -->
+                {% if result.detected_shapes %}
+                <div class="method-result">
+                    <h4>⬡ Shape Detection</h4>
+                    <div class="match-status {{ 'match-yes' if result.shape_related else 'match-no' }}">
+                        {{ '✅ Match Found!' if result.shape_related else '❌ No Match' }}
+                    </div>
+                    <p><strong>Detected shapes:</strong></p>
+                    <ul>
+                        {% for shape, score in result.detected_shapes.items() %}
+                            <li>{{ shape }}: {{ score }}%</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <p><strong>Annotated image:</strong></p>
+            <img src="data:image/png;base64,{{ result.preview }}" alt="Annotated Image">
         </div>
-
-        <p><strong>Similarity score:</strong> {{ result.similarity_score }}%</p>
-
-        <p><strong>Detected shapes:</strong></p>
-        <ul>
-            {% for shape, score in result.detected_shapes.items() %}
-                <li>{{ shape }}: {{ score }}%</li>
-            {% endfor %}
-        </ul>
-
-        <p><strong>Annotated image:</strong></p>
-        <img src="data:image/png;base64,{{ result.preview }}" alt="Result Image">
-    </div>
     {% endif %}
 
     <script src="/static/script.js"></script>
